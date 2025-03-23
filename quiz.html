@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .quiz-container {
+            display: none;
+            text-align: center;
+        }
+
+        label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        select, button {
+            padding: 15px;
+            font-size: 1em;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        select {
+            padding-left: 15px;
+        }
+
+        .question {
+            font-size: 2.2em;  /* Aumentando o tamanho da fonte da pergunta */
+            font-weight: bold;  /* Aplicando negrito */
+            margin-bottom: 20px;
+        }
+
+        .answers {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .answers button {
+            background-color: #3399FF;  /* Azul um pouco mais claro */
+            color: white;
+            font-weight: bold;
+            border: none;
+            margin-bottom: 10px;
+            padding: 20px;
+            font-size: 1.0em;  /* Diminuindo a fonte das respostas */
+            width: 100%;
+            max-width: 800px;  /* Aumentando mais a largura dos botões */
+            border-radius: 5px;
+            text-align: left;
+        }
+
+        .answers button:hover {
+            background-color: #0056b3; /* Azul mais escuro ao passar o mouse */
+        }
+
+        .result {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .status {
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        #encerrarBtn, #resetBtn {
+            background-color: #f44336;
+            color: white;
+            margin-top: 20px;
+        }
+
+        #resetBtn {
+            background-color: #4CAF50;
+        }
+
+        #resetBtn:hover {
+            background-color: #45a049;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Poker Quiz</h1>
+    <div class="container">
+        <label for="categoria">Escolha uma categoria:</label>
+        <select id="categoria">
+            <option value="SRP IP PFR">SRP IP PFR</option>
+            <option value="SRP IP PFC">SRP IP PFC</option>
+            <option value="3BP OOP PFR">3BP OOP PFR</option>
+            <!-- Adicione outras categorias aqui -->
+        </select>
+
+        <button onclick="iniciarQuiz()">Iniciar Quiz</button>
+
+        <div class="quiz-container">
+            <div class="question" id="pergunta"></div>
+            <div class="answers">
+                <button onclick="verificarResposta(0)" id="resposta1"></button>
+                <button onclick="verificarResposta(1)" id="resposta2"></button>
+                <button onclick="verificarResposta(2)" id="resposta3"></button>
+            </div>
+            <div class="result" id="resultado"></div>
+            <div class="status" id="status">Acertos: 0 | Erros: 0</div>
+            <button onclick="encerrarQuiz()" style="display: none;" id="encerrarBtn">Encerrar Quiz</button>
+            <button onclick="resetarQuiz()" style="display: none;" id="resetBtn">Resetar Resultado</button>
+        </div>
+
+        <div id="resumoFinal" style="display: none;">
+            <h3>Resumo do Treinamento:</h3>
+            <p id="acertos">Acertos: 0</p>
+            <p id="erros">Erros: 0</p>
+            <p id="perguntasErradas">Perguntas Erradas:</p>
+        </div>
+    </div>
+
+    <script src="estrategias.js"></script>
+    <script>
+        let estatisticas = { acertos: 0, erros: 0, perguntasErradas: {} };
+        let perguntaAtual = "";
+        let respostaCorreta = "";
+
+        function iniciarQuiz() {
+            let categoriaEscolhida = document.getElementById('categoria').value;
+            gerarPergunta(categoriaEscolhida);
+            document.querySelector('.quiz-container').style.display = 'block';
+            document.getElementById('encerrarBtn').style.display = 'inline-block';
+            document.getElementById('resetBtn').style.display = 'inline-block';
+            document.getElementById('resumoFinal').style.display = 'none';  // Esconde o resumo final
+        }
+
+        function gerarPergunta(categoria) {
+            const perguntas = Object.entries(estrategias[categoria]);
+            const [pergunta, resposta] = perguntas[Math.floor(Math.random() * perguntas.length)];
+
+            perguntaAtual = pergunta;
+            respostaCorreta = resposta;
+
+            document.getElementById('pergunta').innerText = `📌 ${perguntaAtual}`;
+
+            let alternativas = [respostaCorreta];
+            while (alternativas.length < 3) {
+                const [_, alternativaErrada] = perguntas[Math.floor(Math.random() * perguntas.length)];
+                if (!alternativas.includes(alternativaErrada)) {
+                    alternativas.push(alternativaErrada);
+                }
+            }
+            alternativas = alternativas.sort(() => Math.random() - 0.5);
+
+            for (let i = 0; i < 3; i++) {
+                document.getElementById(`resposta${i+1}`).innerText = alternativas[i];
+            }
+        }
+
+        function verificarResposta(indice) {
+            const alternativaEscolhida = document.getElementById(`resposta${indice+1}`).innerText;
+            if (alternativaEscolhida === respostaCorreta) {
+                estatisticas.acertos++;
+                document.getElementById('resultado').innerText = "✅ Correto!";
+            } else {
+                estatisticas.erros++;
+                estatisticas.perguntasErradas[perguntaAtual] = (estatisticas.perguntasErradas[perguntaAtual] || 0) + 1;
+                document.getElementById('resultado').innerText = `❌ Errado! Resposta correta: ${respostaCorreta}`;
+            }
+            document.getElementById('status').innerText = `Acertos: ${estatisticas.acertos} | Erros: ${estatisticas.erros}`;
+            setTimeout(() => gerarPergunta(document.getElementById('categoria').value), 1000);
+        }
+
+        function encerrarQuiz() {
+            mostrarResumo();
+            document.querySelector('.quiz-container').style.display = 'none';
+            document.getElementById('encerrarBtn').style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'none';
+        }
+
+        function mostrarResumo() {
+            document.getElementById('resumoFinal').style.display = 'block';
+            document.getElementById('acertos').innerText = `Acertos: ${estatisticas.acertos}`;
+            document.getElementById('erros').innerText = `Erros: ${estatisticas.erros}`;
+            let perguntasErradasText = "";
+            for (let pergunta in estatisticas.perguntasErradas) {
+                perguntasErradasText += `${pergunta}: ${estatisticas.perguntasErradas[pergunta]} vez(es)<br>`;
+            }
+            document.getElementById('perguntasErradas').innerHTML = `Perguntas Erradas:<br>${perguntasErradasText}`;
+        }
+
+        function resetarQuiz() {
+            estatisticas = { acertos: 0, erros: 0, perguntasErradas: {} };
+            document.getElementById('status').innerText = `Acertos: 0 | Erros: 0`;
+            document.getElementById('resultado').innerText = '';
+            document.getElementById('resumoFinal').style.display = 'none';
+            gerarPergunta(document.getElementById('categoria').value);
+        }
+    </script>
+</body>
+</html>
